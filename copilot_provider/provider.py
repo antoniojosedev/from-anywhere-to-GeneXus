@@ -21,13 +21,27 @@ class CopilotProvider(BaseProvider):
     def _check_copilot_available() -> bool:
         """Check if GitHub Copilot CLI is available."""
         try:
-            result = subprocess.run(
-                ['copilot', '--version'],
-                capture_output=True,
-                timeout=5
-            )
+            import platform
+            
+            # On Windows, need to use shell=True or full path
+            if platform.system() == "Windows":
+                result = subprocess.run(
+                    'copilot --version',
+                    shell=True,
+                    capture_output=True,
+                    timeout=5,
+                    text=True
+                )
+            else:
+                result = subprocess.run(
+                    ['copilot', '--version'],
+                    capture_output=True,
+                    timeout=5,
+                    text=True
+                )
+            
             if result.returncode == 0:
-                print(f"GitHub Copilot CLI: {result.stdout.decode().strip()}")
+                print(f"GitHub Copilot CLI: {result.stdout.strip()}")
                 return True
         except (FileNotFoundError, subprocess.TimeoutExpired):
             pass
@@ -97,17 +111,24 @@ Ensure the procedure is complete and functional."""
         Returns:
             Response from Copilot
         """
+        import platform
+        
         try:
-            # Use copilot alias via PowerShell on Windows
+            # GitHub Copilot CLI requires -p flag for non-interactive prompts
             result = subprocess.run(
-                ['copilot', prompt],
+                ['copilot', '-p', prompt],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
+                encoding='utf-8',
+                errors='replace'
             )
             
-            if result.returncode == 0:
+            if result.returncode == 0 and result.stdout:
                 return result.stdout
+            elif result.returncode == 0:
+                # Success but no output
+                return prompt  # Return original prompt as fallback
             else:
                 raise RuntimeError(
                     f"Copilot error: {result.stderr}"
@@ -123,6 +144,9 @@ Ensure the procedure is complete and functional."""
     @staticmethod
     def _remove_markdown_markers(text: str) -> str:
         """Remove markdown code block markers."""
+        if not text:
+            return ""
+        
         text = text.strip()
         if text.startswith("```"):
             lines = text.split('\n')
