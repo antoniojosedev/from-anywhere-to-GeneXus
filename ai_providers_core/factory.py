@@ -87,5 +87,11 @@ def _register_default_providers():
     except (ImportError, ModuleNotFoundError):
         pass
 
+    try:
+        from ollama_provider.provider import OllamaProvider
+        ProviderFactory.register('ollama', OllamaProvider)
+    except (ImportError, ModuleNotFoundError):
+        pass
+
 
 _register_default_providers()

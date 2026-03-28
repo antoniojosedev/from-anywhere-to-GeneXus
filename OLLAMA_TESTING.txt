@@ -1,0 +1,332 @@
+OLLAMA PROVIDER - LOCAL LLM INFERENCE
+=====================================
+
+## Overview
+
+The Ollama provider enables local LLM inference on your machine using models from the Ollama library.
+
+**Key Benefits:**
+- ✅ COMPLETELY FREE (no API costs ever)
+- ✅ COMPLETELY PRIVATE (no data leaves your machine)
+- ✅ OFFLINE CAPABLE (works without internet after model download)
+- ✅ FAST INFERENCE (runs on local GPU/CPU)
+- ✅ NO SUBSCRIPTIONS (no ongoing payments)
+- ✅ MULTIPLE MODELS (llama, qwen, deepseek, mistral, and more)
+
+
+## Setup Instructions
+
+### 1. Install Ollama
+
+Visit: https://ollama.ai
+
+Download and install for your operating system:
+- Windows: ollama-windows-amd64.exe
+- macOS: ollama-darwin-amd64.dmg
+- Linux: curl -fsSL https://ollama.ai/install.sh | sh
+
+
+### 2. Pull a Model
+
+Once installed, pull a code-focused model:
+
+```bash
+# Recommended for code generation (fast & high quality)
+ollama pull qwen2.5-coder:14b
+
+# Or try these alternatives:
+ollama pull deepseek-coder-v2:latest    # Very good at code
+ollama pull codegemma:latest             # Google's code model
+ollama pull llama3:8b                    # Fast, general purpose
+ollama pull qwen2.5-coder:latest         # Smallest version (4.7GB)
+```
+
+List all installed models:
+```bash
+ollama list
+```
+
+
+### 3. Start Ollama Service
+
+```bash
+ollama serve
+```
+
+This starts the Ollama API server on http://localhost:11434 and keeps it running in the background.
+
+The service will stay running even if you close the terminal (on Windows, it runs as a background service).
+
+
+### 4. Configure Your Project
+
+Edit `.env` file in your project root:
+
+```env
+# Use Ollama as your AI provider
+AI_PROVIDER=ollama
+
+# Which model to use for specifications
+OLLAMA_SPEC_MODEL=qwen2.5-coder:14b
+
+# Which model to use for procedures
+OLLAMA_PROC_MODEL=qwen2.5-coder:14b
+
+# Ollama server location (default: localhost)
+OLLAMA_BASE_URL=http://localhost:11434
+
+# Request timeout in seconds (increase for slow hardware)
+OLLAMA_TIMEOUT=300
+```
+
+
+### 5. Run Conversions
+
+```bash
+export AI_PROVIDER=ollama
+
+python anything_to_spec.py \
+  --programs_directory ./tests/cobol/test1/ \
+  --spec_path ./outputs/spec1.yml
+
+python spec_to_xpz.py \
+  --spec ./outputs/spec1.yml \
+  --output_path ./outputs/
+```
+
+
+## Model Recommendations
+
+### For Fast Inference (< 5 seconds):
+- **qwen2.5-coder:latest** (4.7 GB) - Fast, decent quality
+- **llama3:8b** (3.6 GB) - Very fast, general purpose
+
+### For Best Quality (10-30 seconds):
+- **qwen2.5-coder:14b** (9.0 GB) - Best for code generation
+- **deepseek-coder-v2:latest** (8.9 GB) - Excellent code model
+
+### For Balanced Performance:
+- **codegemma:latest** (5.0 GB) - Google's code model, reliable
+
+### For Coding Specialists:
+- **qwen3-coder:30b** (18 GB) - Top-tier code understanding (requires 16GB+ RAM)
+
+**Recommended for most users:**
+```bash
+ollama pull qwen2.5-coder:14b
+```
+
+
+## Performance Expectations
+
+### Model Speed (approx inference time):
+```
+llama3:8b              : 2-5 seconds per request
+qwen2.5-coder:latest  : 3-8 seconds per request
+qwen2.5-coder:14b     : 5-15 seconds per request
+deepseek-coder-v2     : 10-20 seconds per request
+qwen3-coder:30b       : 20-60 seconds per request
+```
+
+Actual speed depends on:
+- Your hardware (GPU is much faster than CPU)
+- Request complexity and size
+- System load
+- Model parameters
+
+
+## Hardware Requirements
+
+### Minimum (will work but slow):
+- 8 GB RAM
+- Any modern CPU (Intel i5+, AMD Ryzen 3+)
+- SSD recommended
+
+### Recommended:
+- 16 GB RAM
+- GPU (NVIDIA with CUDA, AMD with ROCm)
+- SSD
+
+### For 14B+ Models:
+- 16+ GB RAM
+- GPU with 6GB+ VRAM recommended
+- Or powerful CPU with 32GB+ RAM
+
+
+## Troubleshooting
+
+### "Cannot connect to Ollama at http://localhost:11434"
+
+**Solution:** Make sure Ollama service is running:
+```bash
+ollama serve
+```
+
+On Windows, check if the Ollama background service is running:
+- Open Task Manager → Services
+- Look for "Ollama" service
+- If not running, start Ollama application
+
+
+### Model takes too long to respond
+
+**Problem:** Timeout after 300 seconds
+
+**Solutions:**
+1. Increase timeout in .env:
+   ```env
+   OLLAMA_TIMEOUT=600  # 10 minutes
+   ```
+
+2. Switch to a faster model:
+   ```bash
+   ollama pull qwen2.5-coder:latest
+   ```
+   Then update .env:
+   ```env
+   OLLAMA_SPEC_MODEL=qwen2.5-coder:latest
+   ```
+
+3. Check your hardware resources:
+   - Close heavy applications
+   - Check RAM usage (Ollama needs free RAM)
+   - Enable GPU acceleration if available
+
+
+### Model keeps getting pulled multiple times
+
+**Solution:** Models are cached in Ollama's directory. Run once:
+```bash
+ollama list
+```
+
+This shows all downloaded models. Re-running `ollama pull` will skip download if model exists.
+
+
+### Out of memory error
+
+**Problem:** "Error: CUDA out of memory"
+
+**Solutions:**
+1. Use a smaller model:
+   ```bash
+   ollama pull qwen2.5-coder:latest  # 4.7GB
+   ```
+
+2. Increase system memory limits (Windows):
+   - Right-click Ollama → Properties → Advanced
+   - Check available VRAM allocation
+
+3. Run on CPU only (slower but no VRAM needed):
+   - This is default if no GPU available
+
+
+## Multiple Models Usage
+
+You can switch between models by changing .env:
+
+```env
+# For fast testing
+AI_PROVIDER=ollama
+OLLAMA_SPEC_MODEL=llama3:8b
+OLLAMA_PROC_MODEL=llama3:8b
+```
+
+Then later:
+
+```env
+# For production quality
+AI_PROVIDER=ollama
+OLLAMA_SPEC_MODEL=qwen2.5-coder:14b
+OLLAMA_PROC_MODEL=deepseek-coder-v2:latest
+```
+
+No restart needed - changes apply immediately.
+
+
+## Comparison with Other Providers
+
+| Feature | Ollama | OpenAI | Gemini | Copilot |
+|---------|--------|--------|--------|---------|
+| Cost | FREE | Paid | FREE* | Paid Sub. |
+| Privacy | Local | Cloud | Cloud | Cloud |
+| Offline | ✅ | ❌ | ❌ | ❌ |
+| Speed | Fast | Very Fast | Fast | V.Fast |
+| Quality | Good | Excellent | Excellent | Excellent |
+| Setup Time | 5 min | 2 min | 3 min | 2 min |
+| Internet | No** | Yes | Yes | Yes |
+
+*Gemini: Free tier limited (15 req/min)
+**After model download
+
+
+## API Details
+
+### Request Format
+
+Ollama uses OpenAI-compatible API format:
+
+```json
+{
+  "model": "qwen2.5-coder:14b",
+  "prompt": "Your prompt here",
+  "system": "System message",
+  "stream": false,
+  "temperature": 0.7,
+  "top_p": 0.9
+}
+```
+
+### Available Endpoints
+
+- `POST /api/generate` - Generate completions
+- `GET /api/tags` - List available models
+- `POST /api/pull` - Download a model
+- `DELETE /api/delete` - Delete a model
+
+
+## Advanced Configuration
+
+### Environment Variables
+
+```env
+# Server location (default: http://localhost:11434)
+OLLAMA_BASE_URL=http://localhost:11434
+
+# Specification generation model
+OLLAMA_SPEC_MODEL=qwen2.5-coder:14b
+
+# Procedure generation model
+OLLAMA_PROC_MODEL=qwen2.5-coder:14b
+
+# Request timeout in seconds (default: 300)
+OLLAMA_TIMEOUT=300
+```
+
+### Temperature Settings
+
+The provider uses `temperature=0.7` by default:
+- 0.0 = Deterministic (same output each time)
+- 0.7 = Balanced (default, good for coding)
+- 1.0 = Creative (more varied outputs)
+
+To change, edit `ollama_provider/provider.py` and modify the payload.
+
+
+## Support & Resources
+
+- Ollama Website: https://ollama.ai
+- Ollama GitHub: https://github.com/ollama/ollama
+- Available Models: https://ollama.ai/library
+- Discord Community: https://discord.gg/ollama
+
+
+## Next Steps
+
+1. **Install Ollama**: https://ollama.ai
+2. **Pull a model**: `ollama pull qwen2.5-coder:14b`
+3. **Start service**: `ollama serve`
+4. **Update .env**: `AI_PROVIDER=ollama`
+5. **Run conversion**: `python anything_to_spec.py --programs_directory ./code ...`
+
+You're ready to generate specifications locally, completely free! 🚀
