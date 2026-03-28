@@ -81,5 +81,11 @@ def _register_default_providers():
     except (ImportError, ModuleNotFoundError):
         pass
 
+    try:
+        from gemini_provider.provider import GeminiProvider
+        ProviderFactory.register('gemini', GeminiProvider)
+    except (ImportError, ModuleNotFoundError):
+        pass
+
 
 _register_default_providers()
