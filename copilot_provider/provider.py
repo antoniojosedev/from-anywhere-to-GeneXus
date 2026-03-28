@@ -111,12 +111,14 @@ Ensure the procedure is complete and functional."""
         Returns:
             Response from Copilot
         """
-        import platform
-        
         try:
-            # GitHub Copilot CLI requires -p flag for non-interactive prompts
+            # Escape quotes in prompt for shell
+            escaped_prompt = prompt.replace('"', '\\"')
+            
+            # On Windows, copilot is found via PATH but requires shell=True
             result = subprocess.run(
-                ['copilot', '-p', prompt],
+                f'copilot -p "{escaped_prompt}"',
+                shell=True,
                 capture_output=True,
                 text=True,
                 timeout=30,
